@@ -1,0 +1,276 @@
+-- 회원 도메인
+CREATE TABLE role (
+    role_id     BIGSERIAL PRIMARY KEY,
+    role_name   VARCHAR(50) NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "user" (
+    user_id BIGSERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    role_id BIGINT REFERENCES role(role_id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    deleted_at TIMESTAMPTZ
+);
+
+CREATE TABLE auth (
+    auth_token     VARCHAR(255) PRIMARY KEY,
+    refresh_token  VARCHAR(255),
+    user_id        BIGINT REFERENCES "user"(user_id),
+    expires_at     TIMESTAMPTZ,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE address (
+    address_id       BIGSERIAL PRIMARY KEY,
+    user_id          BIGINT REFERENCES "user"(user_id),
+    recipient_name   VARCHAR(100),
+    recipient_phone  VARCHAR(20),
+    zipcode          VARCHAR(20),
+    detail_address   TEXT,
+    is_default       BOOLEAN DEFAULT false,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 상품 도메인
+CREATE TABLE category (
+    category_id      BIGSERIAL PRIMARY KEY,
+    name             VARCHAR(100) NOT NULL,
+    parent_category  BIGINT REFERENCES category(category_id),
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE product (
+    product_id   BIGSERIAL PRIMARY KEY,
+    name         VARCHAR(200) NOT NULL,
+    description  TEXT,
+    brand        VARCHAR(100),
+    category_id  BIGINT REFERENCES category(category_id),
+    price        NUMERIC(12,2) NOT NULL,
+    status       VARCHAR(50) NOT NULL,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE product_option (
+    option_id        BIGSERIAL PRIMARY KEY,
+    product_id       BIGINT REFERENCES product(product_id),
+    attributes       JSONB,
+    additional_price NUMERIC(12,2) DEFAULT 0,
+    stock            INT NOT NULL,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE product_image (
+    image_id    BIGSERIAL PRIMARY KEY,
+    product_id  BIGINT REFERENCES product(product_id),
+    url         TEXT NOT NULL,
+    is_main     BOOLEAN DEFAULT false,
+    sort_order  INT DEFAULT 0,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 주문 도메인
+CREATE TABLE cart (
+    cart_id     BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT REFERENCES "user"(user_id),
+    product_id  BIGINT REFERENCES product(product_id),
+    option_id   BIGINT REFERENCES product_option(option_id),
+    quantity    INT NOT NULL,
+    price       NUMERIC(12,2) NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "order" (
+    order_id        BIGSERIAL PRIMARY KEY,
+    user_id         BIGINT REFERENCES "user"(user_id),
+    recipient_name  VARCHAR(100),
+    recipient_phone VARCHAR(20),
+    zipcode         VARCHAR(20),
+    detail_address  TEXT,
+    payment_method  VARCHAR(50),
+    total_amount    NUMERIC(12,2) NOT NULL,
+    status          VARCHAR(50) NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE order_item (
+    order_item_id   BIGSERIAL PRIMARY KEY,
+    order_id        BIGINT REFERENCES "order"(order_id),
+    product_id      BIGINT REFERENCES product(product_id),
+    option_id       BIGINT REFERENCES product_option(option_id),
+    option_snapshot JSONB,
+    quantity        INT NOT NULL,
+    unit_price      NUMERIC(12,2) NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE refund (
+    refund_id    BIGSERIAL PRIMARY KEY,
+    order_id     BIGINT REFERENCES "order"(order_id),
+    amount       NUMERIC(12,2) NOT NULL,
+    status       VARCHAR(50),
+    reason       TEXT,
+    processed_at TIMESTAMPTZ,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE shipment (
+    shipment_id     BIGSERIAL PRIMARY KEY,
+    order_id        BIGINT REFERENCES "order"(order_id),
+    carrier         VARCHAR(100),
+    tracking_number VARCHAR(100),
+    status          VARCHAR(50),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 결제 도메인
+CREATE TABLE payment (
+    payment_id     BIGSERIAL PRIMARY KEY,
+    order_id       BIGINT REFERENCES "order"(order_id),
+    amount         NUMERIC(12,2) NOT NULL,
+    method         VARCHAR(50),
+    status         VARCHAR(50),
+    transaction_id VARCHAR(255),
+    error_message  TEXT,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE point (
+    user_id      BIGINT PRIMARY KEY REFERENCES "user"(user_id),
+    point_balance INT DEFAULT 0,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE point_history (
+    point_history_id BIGSERIAL PRIMARY KEY,
+    user_id          BIGINT REFERENCES "user"(user_id),
+    order_id         BIGINT REFERENCES "order"(order_id),
+    type             VARCHAR(50),
+    amount           INT NOT NULL,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE coupon (
+    coupon_id       BIGSERIAL PRIMARY KEY,
+    discount_amount NUMERIC(12,2) NOT NULL,
+    min_order_price NUMERIC(12,2),
+    valid_until     TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE user_coupon (
+    user_coupon_id BIGSERIAL PRIMARY KEY,
+    user_id        BIGINT REFERENCES "user"(user_id),
+    coupon_id      BIGINT REFERENCES coupon(coupon_id),
+    status         VARCHAR(50),
+    issued_at      TIMESTAMPTZ,
+    used_at        TIMESTAMPTZ,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 리뷰 도메인
+CREATE TABLE review (
+    review_id   BIGSERIAL PRIMARY KEY,
+    order_item_id BIGINT REFERENCES order_item(order_item_id),
+    user_id     BIGINT REFERENCES "user"(user_id),
+    product_id  BIGINT REFERENCES product(product_id),
+    rating      INT CHECK(rating BETWEEN 1 AND 5),
+    content     TEXT,
+    image_url   TEXT,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE review_summary (
+    product_id   BIGINT PRIMARY KEY REFERENCES product(product_id),
+    avg_rating   NUMERIC(3,2),
+    review_count INT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE review_comment (
+    comment_id        BIGSERIAL PRIMARY KEY,
+    review_id         BIGINT REFERENCES review(review_id),
+    user_id           BIGINT REFERENCES "user"(user_id),
+    content           TEXT,
+    parent_comment_id BIGINT REFERENCES review_comment(comment_id),
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 고객센터 도메인
+CREATE TABLE customer_post (
+    post_id           BIGSERIAL PRIMARY KEY,
+    user_id           BIGINT REFERENCES "user"(user_id),
+    title             VARCHAR(200),
+    content           TEXT,
+    image_url         TEXT,
+    category          VARCHAR(100),
+    status            VARCHAR(50),
+    assigned_admin_id BIGINT REFERENCES "user"(user_id),
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE customer_comment (
+    comment_id BIGSERIAL PRIMARY KEY,
+    post_id    BIGINT REFERENCES customer_post(post_id),
+    user_id    BIGINT REFERENCES "user"(user_id),
+    content    TEXT,
+    is_read    BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE notice (
+    notice_id  BIGSERIAL PRIMARY KEY,
+    title      VARCHAR(200),
+    content    TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 관리자 도메인
+CREATE TABLE banner (
+    banner_id   BIGSERIAL PRIMARY KEY,
+    image_url   TEXT NOT NULL,
+    score       INT DEFAULT 0,
+    priority    INT DEFAULT 0,
+    redirect_url TEXT,
+    start_date  TIMESTAMPTZ,
+    end_date    TIMESTAMPTZ,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE notification_log (
+    notification_id BIGSERIAL PRIMARY KEY,
+    user_id         BIGINT REFERENCES "user"(user_id),
+    type            VARCHAR(50),
+    message         TEXT,
+    status          VARCHAR(50),
+    error_message   TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);

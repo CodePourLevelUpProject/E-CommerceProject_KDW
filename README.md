@@ -31,7 +31,7 @@
 | 기간 | 내용 | 작업 이슈(Task) |
 |------|------|------|
 | 8/28 ~ 9/11 | 필수 기능 기획 공개<br>이커머스 설계 주간<br>문서화 초안 | [코드 붓다 레벨업 프로젝트 기획안 및 1~2주차 발제](https://github.com/CodePourLevelUpProject/E-CommerceProject_KDW/issues/1) |
-| 9/11 ~ 9/25 | 최초 설계안 코드 리뷰 및 설계 보강<br>매주 리뷰를 통해 설계 공유 및 보강, 문서화 필수<br>Git Repository 생성 ||
+| 9/11 ~ 9/25 | 최초 설계안 코드 리뷰 및 설계 보강<br>매주 리뷰를 통해 설계 공유 및 보강, 문서화 필수<br>Git Repository 생성 |[코드 붓다 레벨업 프로젝트 3~4주차 발제](https://github.com/CodePourLevelUpProject/E-CommerceProject_KDW/issues/2)|
 | 9/25 ~ 10/16 | 연휴로 한 주 쉬어감<br>간단한 주제로 진행<br>설계 기반 기본 세팅, Git 연동 + Spring init<br>Docker 사용법 강의 및 활용법 습득 ||
 | 10/16 ~ 10/30 | 기획서 기본 기능 개발<br>TDD / DDD 활용 프로젝트 개발<br>레이어드 아키텍처 구성 ||
 | 10/30 ~ 11/13 | Spring Security + 보안 기능 추가<br>화면 개발 (React or Thymeleaf 선택) ||
